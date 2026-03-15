@@ -1,0 +1,80 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <div class="panel-header between">
+    <div>
+      <h2>Νέο Αίτημα Άδειας</h2>
+      <p class="muted">Καταχώρηση νέας άδειας για εργαζόμενο.</p>
+    </div>
+    <a class="btn-secondary" href="/leave-requests">Επιστροφή</a>
+  </div>
+
+  <div class="panel-body">
+    {% if error %}
+      <div class="alert danger">{{ error }}</div>
+    {% endif %}
+
+    {% if balance_summary %}
+    <div class="stats-grid compact-bottom">
+      <div class="stat-card">
+        <div class="stat-label">Έτος</div>
+        <div class="stat-value">{{ balance_summary.year }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Δικαιούμενες</div>
+        <div class="stat-value">{{ balance_summary.entitled_days }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Χρησιμοποιημένες</div>
+        <div class="stat-value">{{ balance_summary.used_days }}</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-label">Υπόλοιπο</div>
+        <div class="stat-value">{{ balance_summary.remaining_days }}</div>
+      </div>
+    </div>
+    {% endif %}
+
+    <form method="post" action="/leave-requests" class="form-grid">
+      <div class="field">
+        <label>Εργαζόμενος</label>
+        <select name="employee_id" required>
+          <option value="">Επιλογή</option>
+          {% for employee in employees %}
+          <option value="{{ employee.id }}" {% if form_data.employee_id == employee.id %}selected{% endif %}>{{ employee.full_name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Τύπος άδειας</label>
+        <select name="leave_type_id" required>
+          <option value="">Επιλογή</option>
+          {% for item in leave_types %}
+          <option value="{{ item.id }}" {% if form_data.leave_type_id == item.id %}selected{% endif %}>{{ item.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="field">
+        <label>Από</label>
+        <input type="date" name="date_from" value="{{ form_data.date_from }}" required>
+      </div>
+
+      <div class="field">
+        <label>Έως</label>
+        <input type="date" name="date_to" value="{{ form_data.date_to }}" required>
+      </div>
+
+      <div class="field full-row">
+        <label>Σχόλιο</label>
+        <textarea name="note" rows="4" placeholder="Προαιρετικό σχόλιο">{{ form_data.note }}</textarea>
+      </div>
+
+      <div class="form-actions full-row">
+        <button class="btn-primary" type="submit">Καταχώρηση</button>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

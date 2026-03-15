@@ -4,9 +4,31 @@
   <div class="panel-header between">
     <div>
       <h2>Τύποι Αδειών</h2>
-      <p class="muted small">Βασικές κατηγορίες για τη διαχείριση αδειών.</p>
+      <p class="muted">Ρύθμισε τις κατηγορίες αδειών που θα χρησιμοποιεί το σύστημα.</p>
     </div>
+    <a class="btn-primary" href="/leave-types/new">Νέος τύπος</a>
   </div>
+
+  <div class="panel-body">
+    <form class="filters-grid" method="get" action="/leave-types">
+      <div class="field">
+        <label>Αναζήτηση</label>
+        <input type="text" name="q" value="{{ q or '' }}" placeholder="Code ή όνομα">
+      </div>
+      <div class="field">
+        <label>Κατάσταση</label>
+        <select name="view">
+          <option value="active" {% if view == 'active' %}selected{% endif %}>Μόνο ενεργά</option>
+          <option value="all" {% if view == 'all' %}selected{% endif %}>Όλα</option>
+          <option value="inactive" {% if view == 'inactive' %}selected{% endif %}>Μόνο ανενεργά</option>
+        </select>
+      </div>
+      <div class="field actions-end">
+        <button class="btn-secondary" type="submit">Φίλτρο</button>
+      </div>
+    </form>
+  </div>
+
   <div class="panel-body no-padding">
     <table class="table">
       <thead>
@@ -16,12 +38,13 @@
           <th>Μετράει στο υπόλοιπο</th>
           <th>Χρώμα</th>
           <th>Κατάσταση</th>
+          <th>Ενέργειες</th>
         </tr>
       </thead>
       <tbody>
         {% for item in leave_types %}
         <tr>
-          <td><span class="mono">{{ item.code }}</span></td>
+          <td><strong>{{ item.code }}</strong></td>
           <td>{{ item.name }}</td>
           <td>{{ 'Ναι' if item.counts_against_balance else 'Όχι' }}</td>
           <td>{{ item.color or '-' }}</td>
@@ -30,10 +53,20 @@
               {% if item.is_active %}Ενεργό{% else %}Ανενεργό{% endif %}
             </span>
           </td>
+          <td>
+            <div class="row-actions">
+              <a class="btn-link" href="/leave-types/{{ item.id }}/edit">Επεξεργασία</a>
+              <form method="post" action="/leave-types/{{ item.id }}/toggle">
+                <button class="btn-secondary compact" type="submit">
+                  {% if item.is_active %}Απενεργοποίηση{% else %}Ενεργοποίηση{% endif %}
+                </button>
+              </form>
+            </div>
+          </td>
         </tr>
         {% else %}
         <tr>
-          <td colspan="5" class="empty-state">Δεν υπάρχουν τύποι αδειών.</td>
+          <td colspan="6" class="empty-state">Δεν υπάρχουν τύποι αδειών.</td>
         </tr>
         {% endfor %}
       </tbody>

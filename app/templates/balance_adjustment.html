@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="topbar">
+  <div>
+    <h1>Manual Balance Adjustment</h1>
+    <p class="muted">{{ employee.full_name }}</p>
+  </div>
+</div>
+
+<div class="card form-card">
+  <form method="get" action="/employees/{{ employee.id }}/balance-adjustment" class="filters-row">
+    <div class="field">
+      <label>Έτος</label>
+      <input type="number" name="year" value="{{ selected_year }}" min="2020" max="2100">
+    </div>
+    <div class="filters-actions">
+      <button class="btn btn-secondary" type="submit">Φόρτωση</button>
+    </div>
+  </form>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Used Days</div>
+    <div class="stat-value">{{ used_days }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Current Entitled</div>
+    <div class="stat-value">{{ entitled_days }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Remaining</div>
+    <div class="stat-value">{{ remaining_days }}</div>
+  </div>
+</div>
+
+<div class="card form-card">
+  <form method="post" action="/employees/{{ employee.id }}/balance-adjustment">
+    <input type="hidden" name="year" value="{{ selected_year }}">
+
+    <div class="form-grid">
+      <div class="field">
+        <label>Τελικές δικαιούμενες ημέρες για το έτος</label>
+        <input type="number" name="entitled_days" value="{{ entitled_days }}" required>
+      </div>
+
+      <div class="field">
+        <label>Αιτιολογία / Σχόλιο</label>
+        <input type="text" name="reason" placeholder="π.χ. πρόσληψη μέσα στη χρονιά / διόρθωση λογιστηρίου">
+      </div>
+    </div>
+
+    <div class="alert alert-info">
+      Το patch αυτό αποθηκεύει το τελικό entitled_days για το επιλεγμένο έτος και κρατά την αιτιολογία στο audit log.
+    </div>
+
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Αποθήκευση</button>
+      <a class="btn btn-secondary" href="/employees">Επιστροφή</a>
+    </div>
+  </form>
+</div>
+
+{% endblock %}

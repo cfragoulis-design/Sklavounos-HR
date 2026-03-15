@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <div class="panel-header between">
+    <h2>Αιτήματα Αδειών</h2>
+    <a class="btn-primary" href="/leave-requests/new">Νέο αίτημα</a>
+  </div>
+  <div class="panel-body no-padding">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Εργαζόμενος</th>
+          <th>Τύπος</th>
+          <th>Από</th>
+          <th>Έως</th>
+          <th>Ημέρες</th>
+          <th>Status</th>
+          <th>Σχόλιο</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in leave_requests %}
+        <tr>
+          <td>{{ item.employee.full_name if item.employee else '-' }}</td>
+          <td>{{ item.leave_type.name if item.leave_type else '-' }}</td>
+          <td>{{ item.date_from }}</td>
+          <td>{{ item.date_to }}</td>
+          <td>{{ item.days_requested }}</td>
+          <td>
+            <span class="badge {% if item.status == 'approved' %}success{% elif item.status == 'rejected' %}danger{% else %}warning{% endif %}">
+              {{ item.status }}
+            </span>
+          </td>
+          <td>{{ item.note or '-' }}</td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="empty-state">Δεν υπάρχουν αιτήματα ακόμα.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <div class="panel-header between">
+    <h2>Λίστα Εργαζομένων</h2>
+    <a class="btn-primary" href="/employees/new">Νέος εργαζόμενος</a>
+  </div>
+  <div class="panel-body no-padding">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Ονοματεπώνυμο</th>
+          <th>Τηλέφωνο</th>
+          <th>Ρόλος</th>
+          <th>Τμήμα</th>
+          <th>Τοποθεσία</th>
+          <th>Ετήσια Άδεια</th>
+          <th>Κατάσταση</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for employee in employees %}
+        <tr>
+          <td>{{ employee.full_name }}</td>
+          <td>{{ employee.phone or '-' }}</td>
+          <td>{{ employee.role_title or '-' }}</td>
+          <td>{{ employee.department or '-' }}</td>
+          <td>{{ employee.location or '-' }}</td>
+          <td>{{ employee.annual_leave_days }}</td>
+          <td>
+            <span class="badge {% if employee.is_active %}success{% else %}muted-badge{% endif %}">
+              {% if employee.is_active %}Ενεργός{% else %}Ανενεργός{% endif %}
+            </span>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="7" class="empty-state">Δεν υπάρχουν εργαζόμενοι ακόμα.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

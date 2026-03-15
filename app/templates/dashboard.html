@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Ενεργοί εργαζόμενοι</div>
+    <div class="stat-value">{{ stats.total_employees }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Pending αιτήματα</div>
+    <div class="stat-value">{{ stats.pending_requests }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Σημερινές απουσίες</div>
+    <div class="stat-value">{{ stats.todays_absences }}</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-label">Επόμενες άδειες (14 ημέρες)</div>
+    <div class="stat-value">{{ stats.upcoming_leaves }}</div>
+  </div>
+</div>
+
+<div class="panel-grid two">
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Γρήγορη εκκίνηση</h2>
+    </div>
+    <div class="panel-body">
+      <p>Το project έχει στηθεί και είναι έτοιμο για το επόμενο patch.</p>
+      <div class="button-row">
+        <a class="btn-secondary" href="/employees">Εργαζόμενοι</a>
+        <a class="btn-secondary" href="/leave-types">Τύποι Αδειών</a>
+        <a class="btn-secondary" href="/leave-requests">Αιτήματα</a>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="panel-header">
+      <h2>Demo data</h2>
+    </div>
+    <div class="panel-body">
+      <p>Για να δεις sample records, κάλεσε μία φορά το endpoint:</p>
+      <div class="code-inline">/debug/seed-sample</div>
+      <p class="muted small">Μετά κάνε refresh στις σελίδες λίστας.</p>
+    </div>
+  </section>
+</div>
+{% endblock %}

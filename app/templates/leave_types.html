@@ -1,0 +1,40 @@
+{% extends "base.html" %}
+{% block content %}
+<section class="panel">
+  <div class="panel-header">
+    <h2>Τύποι Αδειών</h2>
+  </div>
+  <div class="panel-body no-padding">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Code</th>
+          <th>Όνομα</th>
+          <th>Μετράει στο υπόλοιπο</th>
+          <th>Χρώμα</th>
+          <th>Κατάσταση</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in leave_types %}
+        <tr>
+          <td>{{ item.code }}</td>
+          <td>{{ item.name }}</td>
+          <td>{{ 'Ναι' if item.counts_against_balance else 'Όχι' }}</td>
+          <td>{{ item.color or '-' }}</td>
+          <td>
+            <span class="badge {% if item.is_active %}success{% else %}muted-badge{% endif %}">
+              {% if item.is_active %}Ενεργό{% else %}Ανενεργό{% endif %}
+            </span>
+          </td>
+        </tr>
+        {% else %}
+        <tr>
+          <td colspan="5" class="empty-state">Δεν υπάρχουν τύποι αδειών.</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+{% endblock %}

@@ -14,6 +14,7 @@ from app.models import Employee, LeaveBalance, LeaveRequest, LeaveType
 from app.routers import auth as auth_router
 from app.routers import dashboard, employees, leave_requests, leave_types
 from app.routers import leave_calendar
+from app.routers import exports_excel
 
 load_dotenv()
 
@@ -37,6 +38,7 @@ app.include_router(employees.router)
 app.include_router(leave_types.router)
 app.include_router(leave_requests.router)
 app.include_router(leave_calendar.router)
+app.include_router(exports_excel.router)
 
 
 def ensure_schema_updates() -> None:

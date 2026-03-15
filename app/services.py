@@ -1,8 +1,13 @@
 from datetime import date, timedelta
+
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session, joinedload
 
-from app.models import Employee, LeaveBalance, LeaveRequest, LeaveType
+from app.models import AuditLog, Employee, LeaveBalance, LeaveRequest, LeaveType
+
+
+DEFAULT_EMPLOYEE_LOCATIONS = ["Central", "Workshop", "Shop"]
+DEFAULT_EMPLOYEE_DEPARTMENTS = ["Production", "Retail", "Logistics", "Admin"]
 
 
 def get_dashboard_stats(db: Session) -> dict:
@@ -31,6 +36,26 @@ def get_dashboard_stats(db: Session) -> dict:
         "todays_absences": todays_absences,
         "upcoming_leaves": upcoming_leaves,
     }
+
+
+def write_audit_log(
+    db: Session,
+    entity_type: str,
+    entity_id: int,
+    action: str,
+    actor: str | None,
+    details: str | None = None,
+) -> None:
+    db.add(AuditLog(entity_type=entity_type, entity_id=entity_id, action=action, actor=actor, details=details))
+    db.commit()
+
+
+def get_employee_locations() -> list[str]:
+    return DEFAULT_EMPLOYEE_LOCATIONS
+
+
+def get_employee_departments() -> list[str]:
+    return DEFAULT_EMPLOYEE_DEPARTMENTS
 
 
 def calculate_days_requested(date_from: date, date_to: date) -> int:
@@ -103,3 +128,23 @@ def get_employee_balance_summary(db: Session, employee_id: int, year: int) -> di
         "used_days": balance.used_days,
         "remaining_days": balance.remaining_days,
     }
+
+
+def get_active_leave_types(db: Session) -> list[LeaveType]:
+    return (
+        db.execute(
+            select(LeaveType)
+            .where(LeaveType.is_active.is_(True))
+            .order_by(LeaveType.name.asc())
+        )
+        .scalars()
+        .all()
+    )
+
+
+def get_leave_request_with_relations(db: Session, request_id: int) -> LeaveRequest | None:
+    return db.scalar(
+        select(LeaveRequest)
+        .options(joinedload(LeaveRequest.employee), joinedload(LeaveRequest.leave_type))
+        .where(LeaveRequest.id == request_id)
+    )

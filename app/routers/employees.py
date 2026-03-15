@@ -8,7 +8,7 @@ from sqlalchemy.orm import Session
 
 from app.dependencies import get_current_admin, get_db
 from app.models import AdminUser, Employee
-from app.services import get_employee_departments, get_employee_locations, write_audit_log
+from app.services import get_employee_locations, write_audit_log
 
 router = APIRouter(prefix="/employees", tags=["employees"])
 templates = Jinja2Templates(directory="app/templates")

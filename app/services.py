@@ -35,11 +35,27 @@ def get_dashboard_stats(db: Session) -> dict:
         )
     ) or 0
 
+    absences_today = (
+        db.execute(
+            select(LeaveRequest)
+            .options(joinedload(LeaveRequest.employee), joinedload(LeaveRequest.leave_type))
+            .where(
+                LeaveRequest.status == "approved",
+                LeaveRequest.date_from <= date.today(),
+                LeaveRequest.date_to >= date.today(),
+            )
+            .order_by(LeaveRequest.date_to.asc(), LeaveRequest.date_from.asc())
+        )
+        .scalars()
+        .all()
+    )
+
     return {
         "total_employees": total_employees,
         "pending_requests": pending_requests,
         "todays_absences": todays_absences,
         "upcoming_leaves": upcoming_leaves,
+        "absences_today": absences_today,
     }
 
 

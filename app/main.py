@@ -14,7 +14,7 @@ from app.models import Employee, LeaveBalance, LeaveRequest, LeaveType
 from app.routers import auth as auth_router
 from app.routers import dashboard, employees, leave_requests, leave_types
 from app.routers import leave_calendar
-import app.routers.exports_excel as exports_excel
+from app.routers import exports_excel
 
 load_dotenv()
 

@@ -1,0 +1,53 @@
+
+{% extends "base.html" %}
+{% block content %}
+
+<div class="topbar">
+  <h1>Άδειες εργαζόμενου</h1>
+  <p class="muted">{{ employee.full_name }}</p>
+</div>
+
+{% if balance %}
+<div class="card">
+  <h3>Υπόλοιπο {{ balance.year }}</h3>
+  <div class="grid-3">
+    <div>Δικαιούμενες: <strong>{{ balance.entitled_days }}</strong></div>
+    <div>Χρησιμοποιημένες: <strong>{{ balance.used_days }}</strong></div>
+    <div>Υπόλοιπο: <strong>{{ balance.remaining_days }}</strong></div>
+  </div>
+</div>
+{% endif %}
+
+<div class="card">
+<h3>Ιστορικό Αδειών</h3>
+
+{% if requests %}
+<table class="table">
+<thead>
+<tr>
+<th>Από</th>
+<th>Έως</th>
+<th>Ημέρες</th>
+<th>Status</th>
+</tr>
+</thead>
+<tbody>
+
+{% for r in requests %}
+<tr>
+<td>{{ r.date_from }}</td>
+<td>{{ r.date_to }}</td>
+<td>{{ r.days_requested }}</td>
+<td>{{ r.status }}</td>
+</tr>
+{% endfor %}
+
+</tbody>
+</table>
+{% else %}
+<p class="muted">Δεν υπάρχουν αιτήματα.</p>
+{% endif %}
+
+</div>
+
+{% endblock %}

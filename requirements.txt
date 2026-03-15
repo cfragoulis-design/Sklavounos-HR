@@ -8,3 +8,4 @@ python-dotenv
 passlib[bcrypt]
 bcrypt==3.2.2
 itsdangerous
+openpyxl

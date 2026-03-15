@@ -5,7 +5,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, Request
 from fastapi.responses import RedirectResponse
 from fastapi.staticfiles import StaticFiles
-from sqlalchemy import select
+from sqlalchemy import inspect, select, text
 from starlette.middleware.sessions import SessionMiddleware
 
 from app.auth import SESSION_COOKIE_NAME, SESSION_KEY, seed_admin_user
@@ -37,6 +37,15 @@ app.include_router(leave_types.router)
 app.include_router(leave_requests.router)
 
 
+def ensure_schema_updates() -> None:
+    inspector = inspect(engine)
+    if inspector.has_table("employees"):
+        columns = {col["name"] for col in inspector.get_columns("employees")}
+        if "notes" not in columns:
+            with engine.begin() as connection:
+                connection.execute(text("ALTER TABLE employees ADD COLUMN notes TEXT"))
+
+
 def seed_defaults() -> None:
     with SessionLocal() as db:
         seed_admin_user(db)
@@ -66,6 +75,7 @@ def seed_defaults() -> None:
 
 def init_db() -> None:
     Base.metadata.create_all(bind=engine)
+    ensure_schema_updates()
     seed_defaults()
 
 
@@ -91,6 +101,7 @@ def debug_seed_sample():
                 department="Store",
                 location="Central",
                 annual_leave_days=20,
+                notes="Demo εγγραφή για έλεγχο λίστας.",
                 is_active=True,
             )
             db.add(employee)

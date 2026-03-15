@@ -27,6 +27,7 @@ class Employee(Base):
     location: Mapped[str | None] = mapped_column(String(100), nullable=True)
     hire_date: Mapped[date | None] = mapped_column(Date, nullable=True)
     annual_leave_days: Mapped[int] = mapped_column(Integer, default=20, nullable=False)
+    notes: Mapped[str | None] = mapped_column(Text, nullable=True)
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
@@ -54,13 +55,13 @@ class LeaveRequest(Base):
     __tablename__ = "leave_requests"
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"), nullable=False, index=True)
-    leave_type_id: Mapped[int] = mapped_column(ForeignKey("leave_types.id"), nullable=False, index=True)
+    employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    leave_type_id: Mapped[int] = mapped_column(ForeignKey("leave_types.id", ondelete="RESTRICT"), nullable=False, index=True)
     date_from: Mapped[date] = mapped_column(Date, nullable=False)
     date_to: Mapped[date] = mapped_column(Date, nullable=False)
-    days_requested: Mapped[int] = mapped_column(Integer, default=1, nullable=False)
+    days_requested: Mapped[int] = mapped_column(Integer, nullable=False)
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
-    status: Mapped[str] = mapped_column(String(20), default="pending", nullable=False, index=True)
+    status: Mapped[str] = mapped_column(String(30), default="pending", nullable=False, index=True)
     decision_note: Mapped[str | None] = mapped_column(Text, nullable=True)
     approved_by: Mapped[str | None] = mapped_column(String(100), nullable=True)
     approved_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
@@ -73,14 +74,14 @@ class LeaveRequest(Base):
 
 class LeaveBalance(Base):
     __tablename__ = "leave_balances"
-    __table_args__ = (UniqueConstraint("employee_id", "year", name="uq_leave_balances_employee_year"),)
+    __table_args__ = (UniqueConstraint("employee_id", "year", name="uq_leave_balance_employee_year"),)
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
-    employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id"), nullable=False, index=True)
-    year: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
-    entitled_days: Mapped[int] = mapped_column(Integer, default=20, nullable=False)
+    employee_id: Mapped[int] = mapped_column(ForeignKey("employees.id", ondelete="CASCADE"), nullable=False, index=True)
+    year: Mapped[int] = mapped_column(Integer, nullable=False)
+    entitled_days: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     used_days: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
-    remaining_days: Mapped[int] = mapped_column(Integer, default=20, nullable=False)
+    remaining_days: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     updated_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow, nullable=False)
 
     employee: Mapped[Employee] = relationship(back_populates="leave_balances")
@@ -91,7 +92,7 @@ class AuditLog(Base):
 
     id: Mapped[int] = mapped_column(Integer, primary_key=True)
     entity_type: Mapped[str] = mapped_column(String(100), nullable=False, index=True)
-    entity_id: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    entity_id: Mapped[int] = mapped_column(Integer, nullable=False, index=True)
     action: Mapped[str] = mapped_column(String(100), nullable=False)
     actor: Mapped[str | None] = mapped_column(String(100), nullable=True)
     details: Mapped[str | None] = mapped_column(Text, nullable=True)

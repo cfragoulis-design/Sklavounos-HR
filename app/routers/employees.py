@@ -56,12 +56,16 @@ def _render_form(
 def employees_list(
     request: Request,
     q: str = "",
-    status_filter: str = "active",
+    status_filter: str = "all",
+    created: int = 0,
+    updated: int = 0,
+    toggled: int = 0,
     db: Session = Depends(get_db),
     admin: AdminUser = Depends(get_current_admin),
 ):
     stmt = select(Employee)
     search = q.strip()
+
     if search:
         like = f"%{search}%"
         stmt = stmt.where(
@@ -80,6 +84,15 @@ def employees_list(
         stmt = stmt.where(Employee.is_active.is_(False))
 
     employees = db.execute(stmt.order_by(Employee.full_name.asc())).scalars().all()
+
+    flash_message = None
+    if created:
+        flash_message = "Ο εργαζόμενος αποθηκεύτηκε κανονικά."
+    elif updated:
+        flash_message = "Οι αλλαγές αποθηκεύτηκαν."
+    elif toggled:
+        flash_message = "Η κατάσταση του εργαζομένου ενημερώθηκε."
+
     return templates.TemplateResponse(
         "employees.html",
         {
@@ -90,6 +103,8 @@ def employees_list(
             "active_page": "employees",
             "q": search,
             "status_filter": status_filter,
+            "flash_message": flash_message,
+            "employees_count": len(employees),
         },
     )
 
@@ -123,7 +138,7 @@ def employee_create(
         "hire_date": hire_date,
         "annual_leave_days": annual_leave_days,
         "notes": notes,
-        "is_active": bool(is_active),
+        "is_active": True if is_active is None else bool(is_active),
     }
 
     clean_name = full_name.strip()
@@ -146,13 +161,16 @@ def employee_create(
         hire_date=parsed_hire_date,
         annual_leave_days=annual_leave_days,
         notes=_clean_optional(notes),
-        is_active=bool(is_active),
+        is_active=True if is_active is None else bool(is_active),
     )
     db.add(employee)
     db.commit()
     db.refresh(employee)
+
     write_audit_log(db, "employee", employee.id, "create", admin.username, f"Created employee {employee.full_name}")
-    return RedirectResponse(url="/employees", status_code=status.HTTP_303_SEE_OTHER)
+    db.commit()
+
+    return RedirectResponse(url="/employees?created=1&status_filter=all", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @router.get("/{employee_id}/edit")
@@ -223,7 +241,9 @@ def employee_update(
 
     db.commit()
     write_audit_log(db, "employee", employee.id, "update", admin.username, f"Updated employee {employee.full_name}")
-    return RedirectResponse(url="/employees", status_code=status.HTTP_303_SEE_OTHER)
+    db.commit()
+
+    return RedirectResponse(url="/employees?updated=1&status_filter=all", status_code=status.HTTP_303_SEE_OTHER)
 
 
 @router.post("/{employee_id}/toggle-active")
@@ -238,6 +258,9 @@ def employee_toggle_active(
 
     employee.is_active = not employee.is_active
     db.commit()
+
     action = "activate" if employee.is_active else "deactivate"
     write_audit_log(db, "employee", employee.id, action, admin.username, f"Toggled active={employee.is_active}")
-    return RedirectResponse(url="/employees", status_code=status.HTTP_303_SEE_OTHER)
+    db.commit()
+
+    return RedirectResponse(url="/employees?toggled=1&status_filter=all", status_code=status.HTTP_303_SEE_OTHER)

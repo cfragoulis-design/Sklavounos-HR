@@ -1,42 +1,25 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="panel">
-  <div class="panel-header between">
-    <div>
-      <h2>Τύποι Αδειών</h2>
-      <p class="muted">Ρύθμισε τις κατηγορίες αδειών που θα χρησιμοποιεί το σύστημα.</p>
-    </div>
-    <a class="btn-primary" href="/leave-types/new">Νέος τύπος</a>
+<div class="topbar">
+  <div>
+    <h1>Τύποι Αδειών</h1>
+    <p class="muted">Ρύθμιση κατηγοριών αδειών.</p>
   </div>
-
-  <div class="panel-body">
-    <form class="filters-grid" method="get" action="/leave-types">
-      <div class="field">
-        <label>Αναζήτηση</label>
-        <input type="text" name="q" value="{{ q or '' }}" placeholder="Code ή όνομα">
-      </div>
-      <div class="field">
-        <label>Κατάσταση</label>
-        <select name="view">
-          <option value="active" {% if view == 'active' %}selected{% endif %}>Μόνο ενεργά</option>
-          <option value="all" {% if view == 'all' %}selected{% endif %}>Όλα</option>
-          <option value="inactive" {% if view == 'inactive' %}selected{% endif %}>Μόνο ανενεργά</option>
-        </select>
-      </div>
-      <div class="field actions-end">
-        <button class="btn-secondary" type="submit">Φίλτρο</button>
-      </div>
-    </form>
+  <div>
+    <a class="btn btn-primary" href="/leave-types/new">Νέος τύπος</a>
   </div>
+</div>
 
-  <div class="panel-body no-padding">
+<div class="card">
+  {% if leave_types %}
+  <div class="table-wrap">
     <table class="table">
       <thead>
         <tr>
           <th>Code</th>
           <th>Όνομα</th>
-          <th>Μετράει στο υπόλοιπο</th>
           <th>Χρώμα</th>
+          <th>Μετράει στο υπόλοιπο</th>
           <th>Κατάσταση</th>
           <th>Ενέργειες</th>
         </tr>
@@ -46,31 +29,43 @@
         <tr>
           <td><strong>{{ item.code }}</strong></td>
           <td>{{ item.name }}</td>
-          <td>{{ 'Ναι' if item.counts_against_balance else 'Όχι' }}</td>
-          <td>{{ item.color or '-' }}</td>
+          <td><span class="badge" style="background: {{ item.color }}; color:#fff;">{{ item.color }}</span></td>
           <td>
-            <span class="badge {% if item.is_active %}success{% else %}muted-badge{% endif %}">
-              {% if item.is_active %}Ενεργό{% else %}Ανενεργό{% endif %}
-            </span>
+            {% if item.counts_against_balance %}
+              <span class="badge badge-success">Ναι</span>
+            {% else %}
+              <span class="badge badge-muted">Όχι</span>
+            {% endif %}
           </td>
           <td>
-            <div class="row-actions">
-              <a class="btn-link" href="/leave-types/{{ item.id }}/edit">Επεξεργασία</a>
-              <form method="post" action="/leave-types/{{ item.id }}/toggle">
-                <button class="btn-secondary compact" type="submit">
-                  {% if item.is_active %}Απενεργοποίηση{% else %}Ενεργοποίηση{% endif %}
-                </button>
+            {% if item.is_active %}
+              <span class="badge badge-success">Ενεργός</span>
+            {% else %}
+              <span class="badge badge-muted">Ανενεργός</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="actions-row">
+              <a class="btn btn-secondary btn-sm" href="/leave-types/{{ item.id }}/edit">Επεξεργασία</a>
+              <form method="post" action="/leave-types/{{ item.id }}/toggle-active" style="display:inline;">
+                {% if item.is_active %}
+                  <button class="btn btn-danger btn-sm" type="submit">Απενεργοποίηση</button>
+                {% else %}
+                  <button class="btn btn-primary btn-sm" type="submit">Ενεργοποίηση</button>
+                {% endif %}
               </form>
             </div>
           </td>
-        </tr>
-        {% else %}
-        <tr>
-          <td colspan="6" class="empty-state">Δεν υπάρχουν τύποι αδειών.</td>
         </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-</section>
+  {% else %}
+  <div class="empty-state">
+    <h3>Δεν υπάρχουν τύποι αδειών</h3>
+    <p class="muted">Πρόσθεσε τον πρώτο τύπο άδειας.</p>
+  </div>
+  {% endif %}
+</div>
 {% endblock %}

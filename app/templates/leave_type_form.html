@@ -1,52 +1,46 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="panel">
-  <div class="panel-header between">
-    <div>
-      <h2>{% if item %}Επεξεργασία Τύπου Άδειας{% else %}Νέος Τύπος Άδειας{% endif %}</h2>
-      <p class="muted">Ορισμός κατηγορίας άδειας και αν μειώνει το ετήσιο υπόλοιπο.</p>
-    </div>
-    <a class="btn-secondary" href="/leave-types">Επιστροφή</a>
+<div class="topbar">
+  <div>
+    <h1>{{ "Νέος τύπος άδειας" if not leave_type else "Επεξεργασία τύπου άδειας" }}</h1>
   </div>
+</div>
 
-  <div class="panel-body">
-    {% if error %}
-      <div class="alert danger">{{ error }}</div>
-    {% endif %}
+<div class="card form-card">
+  {% if error %}
+  <div class="alert alert-danger">{{ error }}</div>
+  {% endif %}
 
-    <form method="post" action="{% if item %}/leave-types/{{ item.id }}/edit{% else %}/leave-types{% endif %}" class="form-grid">
+  <form method="post" action="{{ '/leave-types/new' if not leave_type else '/leave-types/' ~ leave_type.id ~ '/edit' }}">
+    <div class="form-grid">
       <div class="field">
         <label>Code</label>
-        <input type="text" name="code" value="{{ item.code if item else '' }}" placeholder="ANNUAL" required>
+        <input type="text" name="code" value="{{ leave_type.code if leave_type else '' }}" placeholder="ANNUAL_LEAVE">
       </div>
 
       <div class="field">
         <label>Όνομα</label>
-        <input type="text" name="name" value="{{ item.name if item else '' }}" placeholder="Κανονική Άδεια" required>
+        <input type="text" name="name" value="{{ leave_type.name if leave_type else '' }}" required>
       </div>
 
       <div class="field">
         <label>Χρώμα</label>
-        <select name="color">
-          {% set current_color = item.color if item else 'blue' %}
-          {% for color_name in ['blue', 'green', 'red', 'orange', 'purple', 'gray'] %}
-          <option value="{{ color_name }}" {% if current_color == color_name %}selected{% endif %}>{{ color_name }}</option>
-          {% endfor %}
-        </select>
+        <input type="color" name="color" value="{{ leave_type.color if leave_type else '#2563eb' }}">
       </div>
+    </div>
 
-      <div class="field field-check">
-        <label><input type="checkbox" name="counts_against_balance" value="1" {% if item and item.counts_against_balance %}checked{% elif not item %}checked{% endif %}> Μετράει στο ετήσιο υπόλοιπο</label>
-      </div>
+    <div class="checkbox-row">
+      <label><input type="checkbox" name="counts_against_balance" {% if not leave_type or leave_type.counts_against_balance %}checked{% endif %}> Μετράει στο υπόλοιπο άδειας</label>
+    </div>
 
-      <div class="field field-check">
-        <label><input type="checkbox" name="is_active" value="1" {% if item and item.is_active %}checked{% elif not item %}checked{% endif %}> Ενεργό</label>
-      </div>
+    <div class="checkbox-row">
+      <label><input type="checkbox" name="is_active" {% if not leave_type or leave_type.is_active %}checked{% endif %}> Ενεργός</label>
+    </div>
 
-      <div class="form-actions full-row">
-        <button class="btn-primary" type="submit">Αποθήκευση</button>
-      </div>
-    </form>
-  </div>
-</section>
+    <div class="form-actions">
+      <button class="btn btn-primary" type="submit">Αποθήκευση</button>
+      <a class="btn btn-secondary" href="/leave-types">Ακύρωση</a>
+    </div>
+  </form>
+</div>
 {% endblock %}

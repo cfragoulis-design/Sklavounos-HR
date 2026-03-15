@@ -1,42 +1,46 @@
 {% extends "base.html" %}
 {% block content %}
-<section class="panel">
-  <div class="panel-header between">
-    <div>
-      <h2>Αιτήματα Αδειών</h2>
-      <p class="muted">Καταχώρηση, έγκριση και παρακολούθηση αδειών προσωπικού.</p>
+<div class="topbar">
+  <div>
+    <h1>Αιτήματα Αδειών</h1>
+    <p class="muted">Καταχώρηση και έγκριση αιτημάτων.</p>
+  </div>
+  <div>
+    <a class="btn btn-primary" href="/leave-requests/new">Νέο αίτημα</a>
+  </div>
+</div>
+
+<div class="card">
+  <form method="get" action="/leave-requests" class="filters-row">
+    <div class="field">
+      <label>Εργαζόμενος</label>
+      <select name="employee_id">
+        <option value="">Όλοι</option>
+        {% for employee in employees %}
+        <option value="{{ employee.id }}" {% if employee_id == employee.id %}selected{% endif %}>{{ employee.full_name }}</option>
+        {% endfor %}
+      </select>
     </div>
-    <a class="btn-primary" href="/leave-requests/new">Νέο αίτημα</a>
-  </div>
+    <div class="field">
+      <label>Κατάσταση</label>
+      <select name="status_filter">
+        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Όλα</option>
+        <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+        <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
+        <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+        <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
+      </select>
+    </div>
+    <div class="filters-actions">
+      <button class="btn btn-primary" type="submit">Φίλτρο</button>
+      <a class="btn btn-secondary" href="/leave-requests">Καθαρισμός</a>
+    </div>
+  </form>
+</div>
 
-  <div class="panel-body">
-    <form class="filters-grid" method="get" action="/leave-requests">
-      <div class="field">
-        <label>Κατάσταση</label>
-        <select name="status_filter">
-          <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Όλα</option>
-          <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
-          <option value="approved" {% if status_filter == 'approved' %}selected{% endif %}>Approved</option>
-          <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
-          <option value="cancelled" {% if status_filter == 'cancelled' %}selected{% endif %}>Cancelled</option>
-        </select>
-      </div>
-      <div class="field">
-        <label>Εργαζόμενος</label>
-        <select name="employee_id">
-          <option value="">Όλοι</option>
-          {% for employee in employees %}
-          <option value="{{ employee.id }}" {% if employee_id == employee.id %}selected{% endif %}>{{ employee.full_name }}</option>
-          {% endfor %}
-        </select>
-      </div>
-      <div class="field actions-end">
-        <button class="btn-secondary" type="submit">Φίλτρο</button>
-      </div>
-    </form>
-  </div>
-
-  <div class="panel-body no-padding">
+<div class="card">
+  {% if leave_requests %}
+  <div class="table-wrap">
     <table class="table">
       <thead>
         <tr>
@@ -45,52 +49,58 @@
           <th>Από</th>
           <th>Έως</th>
           <th>Ημέρες</th>
-          <th>Status</th>
-          <th>Σχόλιο</th>
+          <th>Κατάσταση</th>
+          <th>Σημείωση</th>
           <th>Ενέργειες</th>
         </tr>
       </thead>
       <tbody>
         {% for item in leave_requests %}
         <tr>
-          <td>{{ item.employee.full_name if item.employee else '-' }}</td>
-          <td>{{ item.leave_type.name if item.leave_type else '-' }}</td>
-          <td>{{ item.date_from.strftime('%d-%m-%Y') if item.date_from else '-' }}</td>
-          <td>{{ item.date_to.strftime('%d-%m-%Y') if item.date_to else '-' }}</td>
+          <td>{{ item.employee.full_name if item.employee else "-" }}</td>
+          <td>{{ item.leave_type.name if item.leave_type else "-" }}</td>
+          <td>{{ item.date_from.strftime('%Y-%m-%d') }}</td>
+          <td>{{ item.date_to.strftime('%Y-%m-%d') }}</td>
           <td>{{ item.days_requested }}</td>
           <td>
-            <span class="badge {% if item.status == 'approved' %}success{% elif item.status == 'rejected' or item.status == 'cancelled' %}danger{% else %}warning{% endif %}">
-              {{ item.status }}
-            </span>
+            {% if item.status == 'approved' %}
+              <span class="badge badge-success">Approved</span>
+            {% elif item.status == 'rejected' %}
+              <span class="badge badge-danger">Rejected</span>
+            {% elif item.status == 'cancelled' %}
+              <span class="badge badge-muted">Cancelled</span>
+            {% else %}
+              <span class="badge badge-warning">Pending</span>
+            {% endif %}
           </td>
           <td>{{ item.note or '-' }}</td>
           <td>
-            <div class="row-actions">
-              {% if item.status != 'approved' %}
-              <form method="post" action="/leave-requests/{{ item.id }}/approve">
-                <button class="btn-secondary compact success-outline" type="submit">Approve</button>
+            <div class="actions-row">
+              {% if item.status == 'pending' %}
+              <form method="post" action="/leave-requests/{{ item.id }}/approve" style="display:inline;">
+                <button class="btn btn-primary btn-sm" type="submit">Approve</button>
               </form>
-              {% endif %}
-              {% if item.status != 'rejected' %}
-              <form method="post" action="/leave-requests/{{ item.id }}/reject">
-                <button class="btn-secondary compact danger-outline" type="submit">Reject</button>
+              <form method="post" action="/leave-requests/{{ item.id }}/reject" style="display:inline;">
+                <button class="btn btn-danger btn-sm" type="submit">Reject</button>
               </form>
               {% endif %}
               {% if item.status != 'cancelled' %}
-              <form method="post" action="/leave-requests/{{ item.id }}/cancel">
-                <button class="btn-secondary compact" type="submit">Cancel</button>
+              <form method="post" action="/leave-requests/{{ item.id }}/cancel" style="display:inline;">
+                <button class="btn btn-secondary btn-sm" type="submit">Cancel</button>
               </form>
               {% endif %}
             </div>
           </td>
         </tr>
-        {% else %}
-        <tr>
-          <td colspan="8" class="empty-state">Δεν υπάρχουν αιτήματα ακόμα.</td>
-        </tr>
         {% endfor %}
       </tbody>
     </table>
   </div>
-</section>
+  {% else %}
+  <div class="empty-state">
+    <h3>Δεν υπάρχουν αιτήματα</h3>
+    <p class="muted">Καταχώρησε το πρώτο αίτημα άδειας.</p>
+  </div>
+  {% endif %}
+</div>
 {% endblock %}

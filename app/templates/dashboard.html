@@ -1,6 +1,68 @@
-
 {% extends "base.html" %}
 {% block content %}
-<h1>Dashboard</h1>
-<p>Σύστημα διαχείρισης προσωπικού.</p>
+
+<div class="topbar">
+  <div>
+    <h1>Dashboard</h1>
+    <p class="muted">Γρήγορη εικόνα προσωπικού και αδειών.</p>
+  </div>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-label">Ενεργοί εργαζόμενοι</div>
+    <div class="stat-value">{{ stats.total_employees }}</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Pending αιτήματα</div>
+    <div class="stat-value">{{ stats.pending_requests }}</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Απουσίες σήμερα</div>
+    <div class="stat-value">{{ stats.todays_absences }}</div>
+  </div>
+
+  <div class="stat-card">
+    <div class="stat-label">Επόμενες άδειες (14 ημέρες)</div>
+    <div class="stat-value">{{ stats.upcoming_leaves }}</div>
+  </div>
+</div>
+
+<div class="card">
+  <div class="section-head">
+    <h3>Ποιος λείπει σήμερα</h3>
+  </div>
+
+  {% if stats.absences_today %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Εργαζόμενος</th>
+          <th>Τύπος</th>
+          <th>Από</th>
+          <th>Έως</th>
+          <th>Ημέρες</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in stats.absences_today %}
+        <tr>
+          <td>{{ item.employee.full_name if item.employee else "-" }}</td>
+          <td>{{ item.leave_type.name if item.leave_type else "-" }}</td>
+          <td>{{ item.date_from.strftime('%Y-%m-%d') }}</td>
+          <td>{{ item.date_to.strftime('%Y-%m-%d') }}</td>
+          <td>{{ item.days_requested }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <p class="muted">Δεν υπάρχουν απουσίες σήμερα.</p>
+  {% endif %}
+</div>
+
 {% endblock %}

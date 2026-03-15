@@ -1,0 +1,41 @@
+
+{% extends "base.html" %}
+{% block content %}
+
+<div class="topbar">
+  <h1>Ημερολόγιο Αδειών</h1>
+  <p class="muted">Όλες οι εγκεκριμένες άδειες προσωπικού</p>
+</div>
+
+<div class="card">
+
+{% if requests %}
+<table class="table">
+<thead>
+<tr>
+<th>Εργαζόμενος</th>
+<th>Από</th>
+<th>Έως</th>
+<th>Ημέρες</th>
+</tr>
+</thead>
+
+<tbody>
+{% for r in requests %}
+<tr>
+<td>{{ r.employee.full_name if r.employee else "-" }}</td>
+<td>{{ r.date_from }}</td>
+<td>{{ r.date_to }}</td>
+<td>{{ r.days_requested }}</td>
+</tr>
+{% endfor %}
+</tbody>
+
+</table>
+{% else %}
+<p class="muted">Δεν υπάρχουν εγκεκριμένες άδειες.</p>
+{% endif %}
+
+</div>
+
+{% endblock %}

@@ -1,6 +1,33 @@
 {% extends "base.html" %}
 {% block content %}
 
+<div style="margin-bottom:20px;">
+    <form action="/exports/payroll-excel" method="get" style="display:flex;gap:10px;align-items:center;">
+        <label>Μήνας:</label>
+        <select name="month">
+            <option value="1">Ιαν</option>
+            <option value="2">Φεβ</option>
+            <option value="3">Μαρ</option>
+            <option value="4">Απρ</option>
+            <option value="5">Μαι</option>
+            <option value="6">Ιουν</option>
+            <option value="7">Ιουλ</option>
+            <option value="8">Αυγ</option>
+            <option value="9">Σεπ</option>
+            <option value="10">Οκτ</option>
+            <option value="11">Νοε</option>
+            <option value="12">Δεκ</option>
+        </select>
+
+        <label>Έτος:</label>
+        <input type="number" name="year" value="2026" style="width:100px;">
+
+        <button type="submit" style="padding:8px 16px;background:#2563eb;color:white;border-radius:6px;">
+            Export Payroll Excel
+        </button>
+    </form>
+</div>
+
 <div class="topbar">
   <div>
     <h1>Dashboard</h1>

@@ -11,10 +11,14 @@ DEFAULT_EMPLOYEE_DEPARTMENTS = ["Production", "Retail", "Logistics", "Admin"]
 
 
 def get_dashboard_stats(db: Session) -> dict:
-    total_employees = db.scalar(select(func.count()).select_from(Employee).where(Employee.is_active.is_(True))) or 0
+    total_employees = db.scalar(
+        select(func.count()).select_from(Employee).where(Employee.is_active.is_(True))
+    ) or 0
+
     pending_requests = db.scalar(
         select(func.count()).select_from(LeaveRequest).where(LeaveRequest.status == "pending")
     ) or 0
+
     todays_absences = db.scalar(
         select(func.count()).select_from(LeaveRequest).where(
             LeaveRequest.status == "approved",
@@ -22,6 +26,7 @@ def get_dashboard_stats(db: Session) -> dict:
             LeaveRequest.date_to >= date.today(),
         )
     ) or 0
+
     upcoming_leaves = db.scalar(
         select(func.count()).select_from(LeaveRequest).where(
             LeaveRequest.status == "approved",
@@ -72,7 +77,10 @@ def calculate_days_requested(date_from: date, date_to: date) -> int:
 
 def get_or_create_leave_balance(db: Session, employee: Employee, year: int) -> LeaveBalance:
     balance = db.scalar(
-        select(LeaveBalance).where(LeaveBalance.employee_id == employee.id, LeaveBalance.year == year)
+        select(LeaveBalance).where(
+            LeaveBalance.employee_id == employee.id,
+            LeaveBalance.year == year,
+        )
     )
     if not balance:
         balance = LeaveBalance(
@@ -122,13 +130,19 @@ def get_employee_balance_summary(db: Session, employee_id: int, year: int) -> di
     employee = db.get(Employee, employee_id)
     if not employee:
         return None
+
     recalculate_leave_balance(db, employee_id, year)
     db.flush()
+
     balance = db.scalar(
-        select(LeaveBalance).where(LeaveBalance.employee_id == employee_id, LeaveBalance.year == year)
+        select(LeaveBalance).where(
+            LeaveBalance.employee_id == employee_id,
+            LeaveBalance.year == year,
+        )
     )
     if not balance:
         return None
+
     return {
         "year": year,
         "entitled_days": balance.entitled_days,

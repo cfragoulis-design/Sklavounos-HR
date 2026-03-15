@@ -1,13 +1,8 @@
 from datetime import date, timedelta
-
 from sqlalchemy import func, select
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
-from app.models import AuditLog, Employee, LeaveRequest
-
-
-DEFAULT_EMPLOYEE_LOCATIONS = ["Central", "Workshop", "Shop"]
-DEFAULT_EMPLOYEE_DEPARTMENTS = ["Production", "Retail", "Logistics", "Admin"]
+from app.models import Employee, LeaveBalance, LeaveRequest, LeaveType
 
 
 def get_dashboard_stats(db: Session) -> dict:
@@ -38,14 +33,73 @@ def get_dashboard_stats(db: Session) -> dict:
     }
 
 
-def write_audit_log(db: Session, entity_type: str, entity_id: int, action: str, actor: str | None, details: str | None = None) -> None:
-    db.add(AuditLog(entity_type=entity_type, entity_id=entity_id, action=action, actor=actor, details=details))
-    db.commit()
+def calculate_days_requested(date_from: date, date_to: date) -> int:
+    delta = (date_to - date_from).days + 1
+    return max(delta, 1)
 
 
-def get_employee_locations() -> list[str]:
-    return DEFAULT_EMPLOYEE_LOCATIONS
+def get_or_create_leave_balance(db: Session, employee: Employee, year: int) -> LeaveBalance:
+    balance = db.scalar(
+        select(LeaveBalance).where(LeaveBalance.employee_id == employee.id, LeaveBalance.year == year)
+    )
+    if not balance:
+        balance = LeaveBalance(
+            employee_id=employee.id,
+            year=year,
+            entitled_days=employee.annual_leave_days or 0,
+            used_days=0,
+            remaining_days=employee.annual_leave_days or 0,
+        )
+        db.add(balance)
+        db.flush()
+    return balance
 
 
-def get_employee_departments() -> list[str]:
-    return DEFAULT_EMPLOYEE_DEPARTMENTS
+def recalculate_leave_balance(db: Session, employee_id: int, year: int) -> None:
+    employee = db.get(Employee, employee_id)
+    if not employee:
+        return
+
+    balance = get_or_create_leave_balance(db, employee, year)
+    balance.entitled_days = employee.annual_leave_days or 0
+
+    used_days = db.scalar(
+        select(func.coalesce(func.sum(LeaveRequest.days_requested), 0))
+        .select_from(LeaveRequest)
+        .join(LeaveType, LeaveType.id == LeaveRequest.leave_type_id)
+        .where(
+            LeaveRequest.employee_id == employee_id,
+            LeaveRequest.status == "approved",
+            LeaveType.counts_against_balance.is_(True),
+            func.extract("year", LeaveRequest.date_from) == year,
+        )
+    ) or 0
+
+    balance.used_days = int(used_days)
+    balance.remaining_days = int(balance.entitled_days - balance.used_days)
+    db.add(balance)
+
+
+def recalculate_leave_balances_for_request(db: Session, leave_request: LeaveRequest) -> None:
+    years = {leave_request.date_from.year, leave_request.date_to.year}
+    for year in years:
+        recalculate_leave_balance(db, leave_request.employee_id, year)
+
+
+def get_employee_balance_summary(db: Session, employee_id: int, year: int) -> dict | None:
+    employee = db.get(Employee, employee_id)
+    if not employee:
+        return None
+    recalculate_leave_balance(db, employee_id, year)
+    db.flush()
+    balance = db.scalar(
+        select(LeaveBalance).where(LeaveBalance.employee_id == employee_id, LeaveBalance.year == year)
+    )
+    if not balance:
+        return None
+    return {
+        "year": year,
+        "entitled_days": balance.entitled_days,
+        "used_days": balance.used_days,
+        "remaining_days": balance.remaining_days,
+    }

@@ -1,118 +1,91 @@
-from fastapi import APIRouter, Depends, Form, HTTPException, Request, status
+from fastapi import APIRouter, Depends, Form, Request, status
 from fastapi.responses import RedirectResponse
 from fastapi.templating import Jinja2Templates
-from sqlalchemy import or_, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.dependencies import get_current_admin, get_db
 from app.models import AdminUser, LeaveType
+from app.services import write_audit_log
 
 router = APIRouter(prefix="/leave-types", tags=["leave-types"])
 templates = Jinja2Templates(directory="app/templates")
 
 
+def _render_form(request: Request, admin: AdminUser, leave_type: LeaveType | None, error: str | None = None):
+    return templates.TemplateResponse(
+        "leave_type_form.html",
+        {
+            "request": request,
+            "admin": admin,
+            "leave_type": leave_type,
+            "error": error,
+            "page_title": "Νέος τύπος άδειας" if leave_type is None else f"Επεξεργασία: {leave_type.name}",
+            "active_page": "leave-types",
+        },
+        status_code=status.HTTP_400_BAD_REQUEST if error else status.HTTP_200_OK,
+    )
+
+
 @router.get("")
 def leave_types_list(
     request: Request,
-    q: str = "",
-    view: str = "active",
     db: Session = Depends(get_db),
     admin: AdminUser = Depends(get_current_admin),
 ):
-    stmt = select(LeaveType)
-
-    if q:
-        like = f"%{q.strip()}%"
-        stmt = stmt.where(or_(LeaveType.code.ilike(like), LeaveType.name.ilike(like)))
-
-    if view == "active":
-        stmt = stmt.where(LeaveType.is_active.is_(True))
-    elif view == "inactive":
-        stmt = stmt.where(LeaveType.is_active.is_(False))
-
-    leave_types = db.execute(stmt.order_by(LeaveType.name.asc())).scalars().all()
-
+    leave_types = db.execute(select(LeaveType).order_by(LeaveType.name.asc())).scalars().all()
     return templates.TemplateResponse(
         "leave_types.html",
         {
             "request": request,
             "admin": admin,
             "leave_types": leave_types,
-            "page_title": "Τύποι αδειών",
-            "active_page": "leave_types",
-            "q": q,
-            "view": view,
+            "page_title": "Τύποι Αδειών",
+            "active_page": "leave-types",
         },
     )
 
 
 @router.get("/new")
 def leave_type_new(request: Request, admin: AdminUser = Depends(get_current_admin)):
-    return templates.TemplateResponse(
-        "leave_type_form.html",
-        {
-            "request": request,
-            "admin": admin,
-            "page_title": "Νέος τύπος άδειας",
-            "active_page": "leave_types",
-            "item": None,
-            "error": None,
-        },
-    )
+    return _render_form(request, admin, None)
 
 
-@router.post("")
+@router.post("/new")
 def leave_type_create(
     request: Request,
-    code: str = Form(...),
+    code: str = Form(""),
     name: str = Form(...),
-    color: str = Form("blue"),
     counts_against_balance: str | None = Form(None),
+    color: str = Form("#2563eb"),
     is_active: str | None = Form(None),
     db: Session = Depends(get_db),
     admin: AdminUser = Depends(get_current_admin),
 ):
-    code_clean = code.strip().upper()
-    name_clean = name.strip()
+    clean_name = name.strip()
+    clean_code = code.strip().upper() or clean_name.upper().replace(" ", "_")
 
-    if not code_clean or not name_clean:
-        return templates.TemplateResponse(
-            "leave_type_form.html",
-            {
-                "request": request,
-                "admin": admin,
-                "page_title": "Νέος τύπος άδειας",
-                "active_page": "leave_types",
-                "item": None,
-                "error": "Το code και το όνομα είναι υποχρεωτικά.",
-            },
-            status_code=400,
-        )
+    if not clean_name:
+        return _render_form(request, admin, None, error="Το όνομα είναι υποχρεωτικό.")
 
-    exists = db.scalar(select(LeaveType).where(LeaveType.code == code_clean))
+    exists = db.scalar(select(LeaveType).where(LeaveType.code == clean_code))
     if exists:
-        return templates.TemplateResponse(
-            "leave_type_form.html",
-            {
-                "request": request,
-                "admin": admin,
-                "page_title": "Νέος τύπος άδειας",
-                "active_page": "leave_types",
-                "item": None,
-                "error": "Υπάρχει ήδη τύπος άδειας με αυτό το code.",
-            },
-            status_code=400,
-        )
+        return _render_form(request, admin, None, error="Υπάρχει ήδη τύπος άδειας με αυτό το code.")
 
-    item = LeaveType(
-        code=code_clean,
-        name=name_clean,
-        color=(color or "").strip() or "blue",
+    leave_type = LeaveType(
+        code=clean_code,
+        name=clean_name,
         counts_against_balance=bool(counts_against_balance),
-        is_active=bool(is_active),
+        color=(color or "#2563eb").strip(),
+        is_active=True if is_active is None else bool(is_active),
     )
-    db.add(item)
+    db.add(leave_type)
     db.commit()
+    db.refresh(leave_type)
+
+    write_audit_log(db, "leave_type", leave_type.id, "create", admin.username, f"Created leave type {leave_type.name}")
+    db.commit()
+
     return RedirectResponse("/leave-types", status_code=status.HTTP_303_SEE_OTHER)
 
 
@@ -123,78 +96,66 @@ def leave_type_edit(
     db: Session = Depends(get_db),
     admin: AdminUser = Depends(get_current_admin),
 ):
-    item = db.get(LeaveType, leave_type_id)
-    if not item:
-        raise HTTPException(status_code=404, detail="Leave type not found")
-
-    return templates.TemplateResponse(
-        "leave_type_form.html",
-        {
-            "request": request,
-            "admin": admin,
-            "page_title": "Επεξεργασία τύπου άδειας",
-            "active_page": "leave_types",
-            "item": item,
-            "error": None,
-        },
-    )
+    leave_type = db.get(LeaveType, leave_type_id)
+    if not leave_type:
+        return RedirectResponse("/leave-types", status_code=status.HTTP_303_SEE_OTHER)
+    return _render_form(request, admin, leave_type)
 
 
 @router.post("/{leave_type_id}/edit")
 def leave_type_update(
     leave_type_id: int,
     request: Request,
-    code: str = Form(...),
+    code: str = Form(""),
     name: str = Form(...),
-    color: str = Form("blue"),
     counts_against_balance: str | None = Form(None),
+    color: str = Form("#2563eb"),
     is_active: str | None = Form(None),
     db: Session = Depends(get_db),
     admin: AdminUser = Depends(get_current_admin),
 ):
-    item = db.get(LeaveType, leave_type_id)
-    if not item:
-        raise HTTPException(status_code=404, detail="Leave type not found")
+    leave_type = db.get(LeaveType, leave_type_id)
+    if not leave_type:
+        return RedirectResponse("/leave-types", status_code=status.HTTP_303_SEE_OTHER)
 
-    code_clean = code.strip().upper()
-    name_clean = name.strip()
+    clean_name = name.strip()
+    clean_code = code.strip().upper() or clean_name.upper().replace(" ", "_")
 
-    duplicate = db.scalar(select(LeaveType).where(LeaveType.code == code_clean, LeaveType.id != leave_type_id))
+    if not clean_name:
+        return _render_form(request, admin, leave_type, error="Το όνομα είναι υποχρεωτικό.")
+
+    duplicate = db.scalar(select(LeaveType).where(LeaveType.code == clean_code, LeaveType.id != leave_type.id))
     if duplicate:
-        return templates.TemplateResponse(
-            "leave_type_form.html",
-            {
-                "request": request,
-                "admin": admin,
-                "page_title": "Επεξεργασία τύπου άδειας",
-                "active_page": "leave_types",
-                "item": item,
-                "error": "Υπάρχει ήδη άλλος τύπος άδειας με αυτό το code.",
-            },
-            status_code=400,
-        )
+        return _render_form(request, admin, leave_type, error="Υπάρχει ήδη τύπος άδειας με αυτό το code.")
 
-    item.code = code_clean
-    item.name = name_clean
-    item.color = (color or "").strip() or "blue"
-    item.counts_against_balance = bool(counts_against_balance)
-    item.is_active = bool(is_active)
-    db.add(item)
+    leave_type.code = clean_code
+    leave_type.name = clean_name
+    leave_type.counts_against_balance = bool(counts_against_balance)
+    leave_type.color = (color or "#2563eb").strip()
+    leave_type.is_active = True if is_active is None else bool(is_active)
+
     db.commit()
+    write_audit_log(db, "leave_type", leave_type.id, "update", admin.username, f"Updated leave type {leave_type.name}")
+    db.commit()
+
     return RedirectResponse("/leave-types", status_code=status.HTTP_303_SEE_OTHER)
 
 
-@router.post("/{leave_type_id}/toggle")
-def leave_type_toggle(
+@router.post("/{leave_type_id}/toggle-active")
+def leave_type_toggle_active(
     leave_type_id: int,
     db: Session = Depends(get_db),
     admin: AdminUser = Depends(get_current_admin),
 ):
-    item = db.get(LeaveType, leave_type_id)
-    if not item:
-        raise HTTPException(status_code=404, detail="Leave type not found")
+    leave_type = db.get(LeaveType, leave_type_id)
+    if not leave_type:
+        return RedirectResponse("/leave-types", status_code=status.HTTP_303_SEE_OTHER)
 
-    item.is_active = not item.is_active
-    db.add(item)
+    leave_type.is_active = not leave_type.is_active
     db.commit()
+
+    action = "activate" if leave_type.is_active else "deactivate"
+    write_audit_log(db, "leave_type", leave_type.id, action, admin.username, f"Toggled active={leave_type.is_active}")
+    db.commit()
+
     return RedirectResponse("/leave-types", status_code=status.HTTP_303_SEE_OTHER)

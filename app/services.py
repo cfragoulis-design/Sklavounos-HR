@@ -9,6 +9,20 @@ from app.models import AuditLog, Employee, LeaveBalance, LeaveRequest, LeaveType
 DEFAULT_EMPLOYEE_LOCATIONS = ["Central", "Workshop", "Shop"]
 DEFAULT_EMPLOYEE_DEPARTMENTS = ["Production", "Retail", "Logistics", "Admin"]
 
+# Σταθερές αργίες Ελλάδας που ΔΕΝ μετράνε στην άδεια.
+# Εξαιρούνται επίσης όλες οι Κυριακές.
+# Το Αγίου Πνεύματος ΔΕΝ εξαιρείται για τη δική σας περίπτωση.
+GREEK_FIXED_HOLIDAYS = {
+    "01-01",  # Πρωτοχρονιά
+    "06-01",  # Θεοφάνια
+    "25-03",  # 25η Μαρτίου
+    "01-05",  # Πρωτομαγιά
+    "15-08",  # Δεκαπενταύγουστος
+    "28-10",  # 28η Οκτωβρίου
+    "25-12",  # Χριστούγεννα
+    "26-12",  # Σύναξη Θεοτόκου
+}
+
 
 def get_dashboard_stats(db: Session) -> dict:
     total_employees = db.scalar(
@@ -87,8 +101,24 @@ def get_employee_departments() -> list[str]:
 
 
 def calculate_days_requested(date_from: date, date_to: date) -> int:
-    delta = (date_to - date_from).days + 1
-    return max(delta, 1)
+    days = 0
+    current = date_from
+
+    while current <= date_to:
+        # Κυριακή
+        if current.weekday() == 6:
+            current += timedelta(days=1)
+            continue
+
+        # Σταθερή αργία
+        if current.strftime("%m-%d") in GREEK_FIXED_HOLIDAYS:
+            current += timedelta(days=1)
+            continue
+
+        days += 1
+        current += timedelta(days=1)
+
+    return max(days, 0)
 
 
 def get_or_create_leave_balance(db: Session, employee: Employee, year: int) -> LeaveBalance:

@@ -13,6 +13,7 @@ from app.database import Base, SessionLocal, engine
 from app.models import Employee, LeaveBalance, LeaveRequest, LeaveType
 from app.routers import auth as auth_router
 from app.routers import dashboard, employees, leave_requests, leave_types
+from app.routers import leave_calendar
 
 load_dotenv()
 
@@ -35,6 +36,7 @@ app.include_router(dashboard.router)
 app.include_router(employees.router)
 app.include_router(leave_types.router)
 app.include_router(leave_requests.router)
+app.include_router(leave_calendar.router)
 
 
 def ensure_schema_updates() -> None:

@@ -46,8 +46,15 @@ def write_audit_log(
     actor: str | None,
     details: str | None = None,
 ) -> None:
-    db.add(AuditLog(entity_type=entity_type, entity_id=entity_id, action=action, actor=actor, details=details))
-    db.commit()
+    db.add(
+        AuditLog(
+            entity_type=entity_type,
+            entity_id=entity_id,
+            action=action,
+            actor=actor,
+            details=details,
+        )
+    )
 
 
 def get_employee_locations() -> list[str]:

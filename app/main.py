@@ -15,6 +15,7 @@ from app.routers import auth as auth_router
 from app.routers import dashboard, employees, leave_requests, leave_types
 from app.routers import leave_calendar
 from app.routers import exports_excel
+import app.routers.balance_adjustment as balance_adjustment
 
 load_dotenv()
 
@@ -39,6 +40,7 @@ app.include_router(leave_types.router)
 app.include_router(leave_requests.router)
 app.include_router(leave_calendar.router)
 app.include_router(exports_excel.router)
+app.include_router(balance_adjustment.router)
 
 
 def ensure_schema_updates() -> None:

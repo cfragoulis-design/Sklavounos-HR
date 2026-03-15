@@ -1,6 +1,98 @@
-
 {% extends "base.html" %}
 {% block content %}
-<h1>Εργαζόμενοι</h1>
-<a href="/employees/new">Νέος εργαζόμενος</a>
+<div class="topbar">
+  <div>
+    <h1>Εργαζόμενοι</h1>
+    <p class="muted">Σύνολο εγγραφών: {{ employees_count }}</p>
+  </div>
+  <div>
+    <a class="btn btn-primary" href="/employees/new">Νέος εργαζόμενος</a>
+  </div>
+</div>
+
+{% if flash_message %}
+<div class="alert alert-success">{{ flash_message }}</div>
+{% endif %}
+
+<div class="card">
+  <form method="get" action="/employees" class="filters-row">
+    <div class="field">
+      <label>Αναζήτηση</label>
+      <input type="text" name="q" value="{{ q or '' }}" placeholder="Όνομα, τηλέφωνο, ρόλος, τμήμα, τοποθεσία">
+    </div>
+
+    <div class="field">
+      <label>Κατάσταση</label>
+      <select name="status_filter">
+        <option value="all" {% if status_filter == 'all' %}selected{% endif %}>Όλοι</option>
+        <option value="active" {% if status_filter == 'active' %}selected{% endif %}>Μόνο ενεργοί</option>
+        <option value="inactive" {% if status_filter == 'inactive' %}selected{% endif %}>Μόνο ανενεργοί</option>
+      </select>
+    </div>
+
+    <div class="filters-actions">
+      <button class="btn btn-primary" type="submit">Φίλτρο</button>
+      <a class="btn btn-secondary" href="/employees">Καθαρισμός</a>
+    </div>
+  </form>
+</div>
+
+<div class="card">
+  {% if employees %}
+  <div class="table-wrap">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Ονοματεπώνυμο</th>
+          <th>Τηλέφωνο</th>
+          <th>Ρόλος</th>
+          <th>Τμήμα</th>
+          <th>Τοποθεσία</th>
+          <th>Πρόσληψη</th>
+          <th>Ετήσια άδεια</th>
+          <th>Κατάσταση</th>
+          <th>Ενέργειες</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for employee in employees %}
+        <tr>
+          <td><strong>{{ employee.full_name }}</strong></td>
+          <td>{{ employee.phone or "-" }}</td>
+          <td>{{ employee.role_title or "-" }}</td>
+          <td>{{ employee.department or "-" }}</td>
+          <td>{{ employee.location or "-" }}</td>
+          <td>{{ employee.hire_date.strftime('%Y-%m-%d') if employee.hire_date else "-" }}</td>
+          <td>{{ employee.annual_leave_days }}</td>
+          <td>
+            {% if employee.is_active %}
+              <span class="badge badge-success">Ενεργός</span>
+            {% else %}
+              <span class="badge badge-muted">Ανενεργός</span>
+            {% endif %}
+          </td>
+          <td>
+            <div class="actions-row">
+              <a class="btn btn-secondary btn-sm" href="/employees/{{ employee.id }}/edit">Επεξεργασία</a>
+              <form method="post" action="/employees/{{ employee.id }}/toggle-active" style="display:inline;">
+                {% if employee.is_active %}
+                  <button class="btn btn-danger btn-sm" type="submit">Απενεργοποίηση</button>
+                {% else %}
+                  <button class="btn btn-primary btn-sm" type="submit">Ενεργοποίηση</button>
+                {% endif %}
+              </form>
+            </div>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state">
+    <h3>Δεν βρέθηκαν εργαζόμενοι</h3>
+    <p class="muted">Πρόσθεσε τον πρώτο εργαζόμενο ή άλλαξε τα φίλτρα.</p>
+  </div>
+  {% endif %}
+</div>
 {% endblock %}

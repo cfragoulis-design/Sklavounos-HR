@@ -2,9 +2,13 @@
 {% block content %}
 <section class="panel">
   <div class="panel-header between">
-    <h2>Λίστα Εργαζομένων</h2>
+    <div>
+      <h2>Λίστα Εργαζομένων</h2>
+      <p class="muted small">Προσωπικό, ρόλοι, τοποθεσίες και κατάσταση.</p>
+    </div>
     <a class="btn-primary" href="/employees/new">Νέος εργαζόμενος</a>
   </div>
+
   <div class="panel-body">
     <form method="get" action="/employees" class="filters-grid employee-filters">
       <div>
@@ -25,6 +29,7 @@
       </div>
     </form>
   </div>
+
   <div class="panel-body no-padding">
     <table class="table">
       <thead>

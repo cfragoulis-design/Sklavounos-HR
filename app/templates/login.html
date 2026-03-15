@@ -3,32 +3,32 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Sklavounos HR - Login</title>
+  <title>Login | Sklavounos HR</title>
   <link rel="stylesheet" href="{{ url_for('static', path='/css/style.css') }}">
 </head>
 <body class="login-body">
-  <div class="login-card">
+  <section class="login-card">
     <div class="brand-kicker">Internal System</div>
     <h1>Sklavounos HR</h1>
-    <p class="muted">Admin πρόσβαση</p>
+    <p class="muted">Σύνδεση διαχειριστή για προσωπικό και άδειες.</p>
 
     {% if error %}
       <div class="alert error">{{ error }}</div>
     {% endif %}
 
-    <form method="post" action="/login" class="form-stack">
+    <form method="post" class="form-stack">
       <label>
-        <span>Username</span>
-        <input type="text" name="username" required>
+        <span class="form-label">Username</span>
+        <input type="text" name="username" required autofocus>
       </label>
 
       <label>
-        <span>Password</span>
+        <span class="form-label">Password</span>
         <input type="password" name="password" required>
       </label>
 
       <button type="submit" class="btn-primary">Σύνδεση</button>
     </form>
-  </div>
+  </section>
 </body>
 </html>

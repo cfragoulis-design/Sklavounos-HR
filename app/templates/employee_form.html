@@ -3,7 +3,10 @@
 {% set data = form_data or {} %}
 <section class="panel narrow-panel">
   <div class="panel-header between">
-    <h2>{% if employee %}Επεξεργασία εργαζομένου{% else %}Νέος εργαζόμενος{% endif %}</h2>
+    <div>
+      <h2>{% if employee %}Επεξεργασία εργαζομένου{% else %}Νέος εργαζόμενος{% endif %}</h2>
+      <p class="muted small">Στοιχεία προσωπικού και δικαιούμενες άδειες.</p>
+    </div>
     <a class="btn-secondary" href="/employees">Επιστροφή</a>
   </div>
   <div class="panel-body">

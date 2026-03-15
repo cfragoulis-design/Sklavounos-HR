@@ -12,6 +12,7 @@
       <div class="brand">
         <div class="brand-kicker">Internal System</div>
         <div class="brand-title">Sklavounos HR</div>
+        <div class="brand-subtitle">Άδειες &amp; προσωπικό</div>
       </div>
 
       <nav class="nav">
@@ -23,6 +24,9 @@
       </nav>
 
       <div class="sidebar-footer">
+        {% if admin %}
+        <div class="admin-pill">Admin: {{ admin.username }}</div>
+        {% endif %}
         <a class="logout-link" href="/logout">Αποσύνδεση</a>
       </div>
     </aside>
@@ -31,7 +35,11 @@
       <header class="topbar">
         <div>
           <h1>{{ page_title or 'Sklavounos HR' }}</h1>
-          {% if admin %}<p class="muted">Συνδεδεμένος: {{ admin.username }}</p>{% endif %}
+          {% if page_subtitle %}
+          <p class="muted">{{ page_subtitle }}</p>
+          {% elif admin %}
+          <p class="muted">Συνδεδεμένος: {{ admin.username }}</p>
+          {% endif %}
         </div>
       </header>
 

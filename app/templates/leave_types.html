@@ -1,8 +1,11 @@
 {% extends "base.html" %}
 {% block content %}
 <section class="panel">
-  <div class="panel-header">
-    <h2>Τύποι Αδειών</h2>
+  <div class="panel-header between">
+    <div>
+      <h2>Τύποι Αδειών</h2>
+      <p class="muted small">Βασικές κατηγορίες για τη διαχείριση αδειών.</p>
+    </div>
   </div>
   <div class="panel-body no-padding">
     <table class="table">
@@ -18,7 +21,7 @@
       <tbody>
         {% for item in leave_types %}
         <tr>
-          <td>{{ item.code }}</td>
+          <td><span class="mono">{{ item.code }}</span></td>
           <td>{{ item.name }}</td>
           <td>{{ 'Ναι' if item.counts_against_balance else 'Όχι' }}</td>
           <td>{{ item.color or '-' }}</td>

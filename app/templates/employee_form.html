@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+{% block content %}
+{% set data = form_data or {} %}
+<section class="panel narrow-panel">
+  <div class="panel-header between">
+    <h2>{% if employee %}Επεξεργασία εργαζομένου{% else %}Νέος εργαζόμενος{% endif %}</h2>
+    <a class="btn-secondary" href="/employees">Επιστροφή</a>
+  </div>
+  <div class="panel-body">
+    {% if error %}
+      <div class="alert error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post" class="form-grid two-col">
+      <label>
+        <span class="form-label">Ονοματεπώνυμο *</span>
+        <input type="text" name="full_name" required value="{{ data.full_name if data else (employee.full_name if employee else '') }}">
+      </label>
+
+      <label>
+        <span class="form-label">Τηλέφωνο</span>
+        <input type="text" name="phone" value="{{ data.phone if data else (employee.phone if employee else '') }}">
+      </label>
+
+      <label>
+        <span class="form-label">Θέση / Ρόλος</span>
+        <input type="text" name="role_title" value="{{ data.role_title if data else (employee.role_title if employee else '') }}">
+      </label>
+
+      <label>
+        <span class="form-label">Τμήμα</span>
+        <select name="department">
+          <option value="">- Επιλογή -</option>
+          {% set current_department = data.department if data else (employee.department if employee else '') %}
+          {% for item in departments %}
+            <option value="{{ item }}" {% if current_department == item %}selected{% endif %}>{{ item }}</option>
+          {% endfor %}
+          {% if current_department and current_department not in departments %}
+            <option value="{{ current_department }}" selected>{{ current_department }}</option>
+          {% endif %}
+        </select>
+      </label>
+
+      <label>
+        <span class="form-label">Τοποθεσία</span>
+        <select name="location">
+          <option value="">- Επιλογή -</option>
+          {% set current_location = data.location if data else (employee.location if employee else '') %}
+          {% for item in locations %}
+            <option value="{{ item }}" {% if current_location == item %}selected{% endif %}>{{ item }}</option>
+          {% endfor %}
+          {% if current_location and current_location not in locations %}
+            <option value="{{ current_location }}" selected>{{ current_location }}</option>
+          {% endif %}
+        </select>
+      </label>
+
+      <label>
+        <span class="form-label">Ημερομηνία πρόσληψης</span>
+        <input type="date" name="hire_date" value="{{ data.hire_date if data else (employee.hire_date if employee and employee.hire_date else '') }}">
+      </label>
+
+      <label>
+        <span class="form-label">Δικαιούμενες ημέρες άδειας</span>
+        <input type="number" min="0" name="annual_leave_days" value="{{ data.annual_leave_days if data else (employee.annual_leave_days if employee else 20) }}">
+      </label>
+
+      <label class="full-width">
+        <span class="form-label">Σημειώσεις</span>
+        <textarea name="notes" rows="4" placeholder="Προαιρετικές σημειώσεις για τον εργαζόμενο">{{ data.notes if data else (employee.notes if employee and employee.notes else '') }}</textarea>
+      </label>
+
+      <label class="checkbox-row full-width">
+        {% set current_active = data.is_active if data else (employee.is_active if employee else True) %}
+        <input type="checkbox" name="is_active" value="1" {% if current_active %}checked{% endif %}>
+        <span>Ενεργός εργαζόμενος</span>
+      </label>
+
+      <div class="button-row full-width top-gap">
+        <button type="submit" class="btn-primary">{% if employee %}Αποθήκευση αλλαγών{% else %}Δημιουργία εργαζομένου{% endif %}</button>
+        <a class="btn-secondary" href="/employees">Ακύρωση</a>
+      </div>
+    </form>
+  </div>
+</section>
+{% endblock %}

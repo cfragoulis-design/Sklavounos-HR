@@ -37,7 +37,7 @@ jobs:
         run: python -m pip install -r requirements-dev.txt
 
       - name: Verify characterization tests
-        run: python -m ruff check tests
+        run: python -m ruff check tests tools
 
       - name: Verify dependency graph
         run: python -m pip check

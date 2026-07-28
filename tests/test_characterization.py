@@ -69,8 +69,9 @@ EXPECTED_RUNTIME_ROUTES = {
 }
 EXPECTED_LEGACY_RUNTIME_FILE_COUNT = 39
 EXPECTED_LEGACY_RUNTIME_SHA256 = (
-    "fcc339b5473cbd6483aa4d678fa52b3977502ce669efe67245e41b5d517baf88"
+    "6b23b2184f23cf0f4cc502c69d68c60b5f324b9effbc770a90752bf9978c23bd"
 )
+TEXT_RUNTIME_SUFFIXES = {".css", ".html", ".js", ".json", ".py", ".txt"}
 
 
 @pytest.fixture(scope="session", autouse=True)
@@ -159,9 +160,13 @@ def test_legacy_runtime_source_manifest_is_frozen() -> None:
     )
     digest = hashlib.sha256()
     for relative_path in tracked_files:
+        path = repository_root / relative_path
+        content = path.read_bytes()
+        if path.suffix in TEXT_RUNTIME_SUFFIXES or path.name == "Procfile":
+            content = content.replace(b"\r\n", b"\n").replace(b"\r", b"\n")
         digest.update(relative_path.replace("\\", "/").encode())
         digest.update(b"\0")
-        digest.update((repository_root / relative_path).read_bytes())
+        digest.update(content)
         digest.update(b"\0")
 
     assert len(tracked_files) == EXPECTED_LEGACY_RUNTIME_FILE_COUNT

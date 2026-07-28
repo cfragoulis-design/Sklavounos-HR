@@ -11,8 +11,9 @@ database schema, Railway configuration, environment variables, credentials, busi
 the live HR deployment.
 
 The exact legacy runtime surface contains 39 Git-tracked files under `app/` plus
-`requirements.txt`, `Procfile` and `railway.json`. Its deterministic path/content SHA-256 is
-`fcc339b5473cbd6483aa4d678fa52b3977502ce669efe67245e41b5d517baf88`.
+`requirements.txt`, `Procfile` and `railway.json`. Its deterministic, line-ending-independent
+path/content SHA-256 is
+`6b23b2184f23cf0f4cc502c69d68c60b5f324b9effbc770a90752bf9978c23bd`.
 
 ## Captured behavior
 
@@ -53,6 +54,8 @@ These are migration/hardening inputs. No production fix should be bundled with t
 
 ## Verification
 
-The branch gate installs `requirements-dev.txt`, runs Ruff only on the new tests, verifies the
-dependency graph and runs the complete characterization suite on Python 3.11. It has read-only
-repository permissions and no deployment step or production secret.
+The branch gate installs the exact compatibility versions in `requirements-dev.txt`, runs Ruff
+only on the new tests, verifies the dependency graph and runs the complete characterization suite
+on Python 3.11. The production `requirements.txt` remains unchanged and its lack of pins remains
+an explicit finding. CI has read-only repository permissions and no deployment step or production
+secret.
